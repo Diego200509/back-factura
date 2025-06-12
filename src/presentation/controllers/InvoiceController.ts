@@ -1,12 +1,14 @@
-import { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
+import { FastifyInstance } from "fastify";
 import { CreateInvoiceUseCase } from "../../core/usecases/CreateInvoiceUseCase";
 import { GetInvoiceUseCase } from "../../core/usecases/GetInvoiceUseCase";
 import { ListInvoicesUseCase } from "../../core/usecases/ListInvoicesUseCase";
+import { BulkInsertItemsUseCase } from "../../core/usecases/BulkInsertItemsUseCase";
 
 interface InvoiceRoutesOpts {
   createInvoice: CreateInvoiceUseCase;
   getInvoice: GetInvoiceUseCase;
   listInvoices: ListInvoicesUseCase;
+  bulkInsertItems: BulkInsertItemsUseCase;
 }
 
 /**
@@ -17,7 +19,7 @@ export function invoiceRoutes(
   opts: InvoiceRoutesOpts,
   done: () => void
 ) {
-  const { createInvoice, getInvoice, listInvoices } = opts;
+  const { createInvoice, getInvoice, listInvoices, bulkInsertItems } = opts;
 
   // Crear factura (maestro + detalle)
   fastify.post<{
@@ -52,6 +54,19 @@ export function invoiceRoutes(
   fastify.get("/invoices", async (_request, reply) => {
     const all = await listInvoices.execute();
     return reply.send(all);
+  });
+
+  // Bulk‐load de ítems (detalle)
+  fastify.post<{
+    Body: {
+      invoiceId: string;
+      productName: string;
+      quantity: number;
+      unitPrice: number;
+    }[];
+  }>("/invoice-items/bulk", async (request, reply) => {
+    const count = await bulkInsertItems.execute(request.body);
+    reply.code(201).send({ inserted: count });
   });
 
   done();
