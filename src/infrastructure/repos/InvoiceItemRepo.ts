@@ -11,14 +11,19 @@ export class InvoiceItemRepo implements IInvoiceItemRepo {
   }
 
   async bulkInsert(items: InvoiceItem[]): Promise<void> {
-    const entities = items.map(i =>
-      this.repo.create({
-        productName: i.productName,
-        quantity: i.quantity,
-        unitPrice: i.unitPrice,
-        invoice: { id: i.invoiceId } as any,
-      })
-    );
-    await this.repo.insert(entities);
+    const CHUNK_SIZE = 250;
+
+    for (let i = 0; i < items.length; i += CHUNK_SIZE) {
+      const chunk = items.slice(i, i + CHUNK_SIZE);
+      const entities = chunk.map(item =>
+        this.repo.create({
+          productName: item.productName,
+          quantity: item.quantity,
+          unitPrice: item.unitPrice,
+          invoice: { id: item.invoiceId } as any,
+        })
+      );
+      await this.repo.insert(entities);
+    }
   }
 }

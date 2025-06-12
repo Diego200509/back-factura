@@ -25,6 +25,10 @@ export class Database {
         entities: [InvoiceEntity, InvoiceItemEntity],
         synchronize: true,
         logging: false,
+        extra: {
+          // Aumentamos el pool de conexiones a 20
+          connectionLimit: 20
+        }
       });
 
       await Database.instance.initialize();

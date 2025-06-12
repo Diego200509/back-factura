@@ -1,0 +1,17 @@
+config:
+  target: 'http://localhost:3000'
+  processor: './processors.js'        
+  phases:
+    - duration: 30
+      arrivalRate: 20
+  defaults:
+    headers:
+      Content-Type: application/json
+
+scenarios:
+  - name: Bulk load dinámico
+    flow:
+      - function: generateItems          
+      - post:
+          url: /invoice-items/bulk
+          json: "{{ items }}"           
