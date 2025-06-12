@@ -1,4 +1,4 @@
-import { Repository, DataSource } from "typeorm";
+import { Repository, DataSource, FindManyOptions } from "typeorm";
 import { IInvoiceRepo } from "../../core/repos/IInvoiceRepo";
 import { Invoice } from "../../core/entities/Invoice";
 import { InvoiceEntity } from "../db/entities/InvoiceEntity";
@@ -65,19 +65,26 @@ export class InvoiceRepo implements IInvoiceRepo {
     );
   }
 
-  async listAll(): Promise<Invoice[]> {
-    const list = await this.repo.find({ relations: ["items"] });
-    return list.map(e =>
+  async listAll(options?: { skip: number; take: number }): Promise<Invoice[]> {
+    const findOpts: FindManyOptions<InvoiceEntity> = {
+      relations: ["items"],
+      skip:      options?.skip,
+      take:      options?.take,
+      order:     { date: "DESC" },
+    };
+
+    const entities = await this.repo.find(findOpts);
+    return entities.map(e =>
       new Invoice(
         e.id,
         e.customerName,
         e.date,
         e.items.map(i => ({
-          id: i.id,
-          invoiceId: e.id,
+          id:          i.id,
+          invoiceId:   e.id,
           productName: i.productName,
-          quantity: i.quantity,
-          unitPrice: Number(i.unitPrice),
+          quantity:    i.quantity,
+          unitPrice:   Number(i.unitPrice),
         }))
       )
     );

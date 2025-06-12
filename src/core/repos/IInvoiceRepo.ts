@@ -16,7 +16,9 @@ export interface IInvoiceRepo {
   findById(id: string): Promise<Invoice | null>;
 
   /**
-   * Lista todas las facturas junto con sus items.
-   */
-  listAll(): Promise<Invoice[]>;
+  * Lista facturas paginadas junto con sus items.
+  * @param options.skip cuántos registros saltar (offset)
+  * @param options.take cuántos registros traer (limit)
+  */
+  listAll(options?: { skip: number; take: number }): Promise<Invoice[]>;
 }

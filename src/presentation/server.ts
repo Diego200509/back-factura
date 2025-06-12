@@ -1,4 +1,5 @@
 import Fastify from "fastify";
+import cors from "@fastify/cors";
 import { Database } from "../infrastructure/db/data-source";
 import { InvoiceRepo } from "../infrastructure/repos/InvoiceRepo";
 import { InvoiceItemRepo } from "../infrastructure/repos/InvoiceItemRepo";
@@ -25,7 +26,12 @@ async function bootstrap() {
   // 4. Crear servidor Fastify
   const server = Fastify({ logger: true });
 
-  // 5. Registrar rutas (agregamos bulkInsertItems)
+  // 5. Habilitar CORS para el front (puerto 5173)
+  await server.register(cors, {
+    origin: ["http://localhost:5173"]
+  });
+
+  // 6. Registrar rutas (incluye bulkInsertItems)
   server.register(invoiceRoutes, {
     createInvoice,
     getInvoice,
@@ -33,7 +39,7 @@ async function bootstrap() {
     bulkInsertItems,
   });
 
-  // 6. Arrancar
+  // 7. Arrancar
   try {
     await server.listen({ port: config.SERVER_PORT });
     console.log(`Server listening on http://localhost:${config.SERVER_PORT}`);

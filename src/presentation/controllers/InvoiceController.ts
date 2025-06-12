@@ -50,10 +50,19 @@ export function invoiceRoutes(
     return reply.send(invoice);
   });
 
-  // Listar todas
-  fastify.get("/invoices", async (_request, reply) => {
-    const all = await listInvoices.execute();
-    return reply.send(all);
+  // Listar facturas con paginación
+  fastify.get<{
+    Querystring: { page?: string; pageSize?: string };
+  }>("/invoices", async (request, reply) => {
+    const { page = "1", pageSize = "20" } = request.query;
+    const pageNum = Math.max(1, parseInt(page, 10) || 1);
+    const sizeNum = Math.min(100, parseInt(pageSize, 10) || 20);
+
+    const invoices = await listInvoices.execute({
+      page: pageNum,
+      pageSize: sizeNum,
+    });
+    return reply.send(invoices);
   });
 
   // Bulk‐load de ítems (detalle)
