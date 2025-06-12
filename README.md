@@ -11,9 +11,7 @@ API de facturación con Clean Architecture, Fastify y TypeORM.
 
 ## Scripts
 
-- `dev` — servidor en hot-reload  
 - `seed` — genera y carga datos con Faker  
-- `test` — corre Jest  
 - `load-test` — ejecuta el benchmark de carga masiva con Artillery  
 
 ## Benchmarking con Artillery
