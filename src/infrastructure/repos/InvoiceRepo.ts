@@ -1,4 +1,4 @@
-import { Repository, DataSource, FindManyOptions } from "typeorm";
+import { Repository, DataSource, FindManyOptions, Like } from "typeorm";
 import { IInvoiceRepo } from "../../core/repos/IInvoiceRepo";
 import { Invoice } from "../../core/entities/Invoice";
 import { InvoiceEntity } from "../db/entities/InvoiceEntity";
@@ -14,7 +14,6 @@ export class InvoiceRepo implements IInvoiceRepo {
   }
 
   async create(inv: Invoice): Promise<Invoice> {
-    // Prepara la entidad incluyendo items
     const entity = this.repo.create({
       customerName: inv.customerName,
       date: inv.date,
@@ -29,7 +28,6 @@ export class InvoiceRepo implements IInvoiceRepo {
 
     const saved = await this.repo.save(entity);
 
-    // Mapea de vuelta a dominio
     return new Invoice(
       saved.id,
       saved.customerName,
@@ -65,13 +63,23 @@ export class InvoiceRepo implements IInvoiceRepo {
     );
   }
 
-  async listAll(options?: { skip: number; take: number }): Promise<Invoice[]> {
+  async listAll(options?: {
+    skip?: number;
+    take?: number;
+    customerName?: string;
+  }): Promise<Invoice[]> {
     const findOpts: FindManyOptions<InvoiceEntity> = {
       relations: ["items"],
-      skip:      options?.skip,
-      take:      options?.take,
-      order:     { date: "DESC" },
+      skip: options?.skip,
+      take: options?.take,
+      order: { date: "DESC" },
     };
+
+    if (options?.customerName) {
+      findOpts.where = {
+        customerName: Like(`%${options.customerName}%`),
+      };
+    }
 
     const entities = await this.repo.find(findOpts);
     return entities.map(e =>
@@ -80,11 +88,11 @@ export class InvoiceRepo implements IInvoiceRepo {
         e.customerName,
         e.date,
         e.items.map(i => ({
-          id:          i.id,
-          invoiceId:   e.id,
+          id: i.id,
+          invoiceId: e.id,
           productName: i.productName,
-          quantity:    i.quantity,
-          unitPrice:   Number(i.unitPrice),
+          quantity: i.quantity,
+          unitPrice: Number(i.unitPrice),
         }))
       )
     );

@@ -20,5 +20,9 @@ export interface IInvoiceRepo {
   * @param options.skip cuántos registros saltar (offset)
   * @param options.take cuántos registros traer (limit)
   */
-  listAll(options?: { skip: number; take: number }): Promise<Invoice[]>;
+  listAll(options?: {
+    skip?: number;
+    take?: number;
+    customerName?: string;
+  }): Promise<Invoice[]>;
 }

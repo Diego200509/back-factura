@@ -19,7 +19,12 @@ export function invoiceRoutes(
   opts: InvoiceRoutesOpts,
   done: () => void
 ) {
-  const { createInvoice, getInvoice, listInvoices, bulkInsertItems } = opts;
+  const {
+    createInvoice,
+    getInvoice,
+    listInvoices,
+    bulkInsertItems,
+  } = opts;
 
   // Crear factura (maestro + detalle)
   fastify.post<{
@@ -50,22 +55,33 @@ export function invoiceRoutes(
     return reply.send(invoice);
   });
 
-  // Listar facturas con paginación
+  // Listar facturas con paginación y filtro por cliente
   fastify.get<{
-    Querystring: { page?: string; pageSize?: string };
+    Querystring: {
+      page?: string;
+      pageSize?: string;
+      customerName?: string;
+    };
   }>("/invoices", async (request, reply) => {
-    const { page = "1", pageSize = "20" } = request.query;
+    const {
+      page = "1",
+      pageSize = "20",
+      customerName,
+    } = request.query;
+
     const pageNum = Math.max(1, parseInt(page, 10) || 1);
     const sizeNum = Math.min(100, parseInt(pageSize, 10) || 20);
 
     const invoices = await listInvoices.execute({
       page: pageNum,
       pageSize: sizeNum,
+      customerName,
     });
-    return reply.send(invoices);
+
+    reply.send(invoices);
   });
 
-  // Bulk‐load de ítems (detalle)
+  // Bulk-load de ítems (detalle)
   fastify.post<{
     Body: {
       invoiceId: string;
