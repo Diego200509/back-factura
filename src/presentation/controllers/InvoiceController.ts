@@ -1,8 +1,13 @@
 import { FastifyInstance } from "fastify";
+import { DataSource } from "typeorm";
+
 import { CreateInvoiceUseCase } from "../../core/usecases/CreateInvoiceUseCase";
 import { GetInvoiceUseCase } from "../../core/usecases/GetInvoiceUseCase";
 import { ListInvoicesUseCase } from "../../core/usecases/ListInvoicesUseCase";
 import { BulkInsertItemsUseCase } from "../../core/usecases/BulkInsertItemsUseCase";
+
+import { CustomerEntity } from "../../infrastructure/db/entities/CustomerEntity";
+import { ProductEntity } from "../../infrastructure/db/entities/ProductEntity";
 
 interface InvoiceRoutesOpts {
   createInvoice: CreateInvoiceUseCase;
@@ -11,9 +16,6 @@ interface InvoiceRoutesOpts {
   bulkInsertItems: BulkInsertItemsUseCase;
 }
 
-/**
- * Plugin Fastify para facturas
- */
 export function invoiceRoutes(
   fastify: FastifyInstance,
   opts: InvoiceRoutesOpts,
@@ -26,11 +28,13 @@ export function invoiceRoutes(
     bulkInsertItems,
   } = opts;
 
-  // Crear factura (maestro + detalle)
+  const dataSource = require("../../infrastructure/db/data-source").Database;
+
+  // Crear factura
   fastify.post<{
     Body: {
       customerName: string;
-      date: string; // ISO
+      date: string;
       items: { productName: string; quantity: number; unitPrice: number }[];
     };
   }>("/invoices", async (request, reply) => {
@@ -55,7 +59,7 @@ export function invoiceRoutes(
     return reply.send(invoice);
   });
 
-  // Listar facturas con paginación y filtro por cliente
+  // Listar facturas
   fastify.get<{
     Querystring: {
       page?: string;
@@ -81,7 +85,7 @@ export function invoiceRoutes(
     reply.send(invoices);
   });
 
-  // Bulk-load de ítems (detalle)
+  // Bulk-insert de ítems
   fastify.post<{
     Body: {
       invoiceId: string;
@@ -92,6 +96,22 @@ export function invoiceRoutes(
   }>("/invoice-items/bulk", async (request, reply) => {
     const count = await bulkInsertItems.execute(request.body);
     reply.code(201).send({ inserted: count });
+  });
+
+  // Obtener clientes
+  fastify.get("/customers", async (_, reply) => {
+    const ds: DataSource = await dataSource.getInstance();
+    const repo = ds.getRepository(CustomerEntity);
+    const customers = await repo.find();
+    reply.send(customers);
+  });
+
+  // Obtener productos
+  fastify.get("/products", async (_, reply) => {
+    const ds: DataSource = await dataSource.getInstance();
+    const repo = ds.getRepository(ProductEntity);
+    const products = await repo.find();
+    reply.send(products);
   });
 
   done();
