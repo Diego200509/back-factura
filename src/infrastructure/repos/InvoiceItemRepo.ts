@@ -1,4 +1,4 @@
-import { Repository, DataSource } from "typeorm";
+import { Repository, DataSource, EntityManager } from "typeorm";
 import { IInvoiceItemRepo } from "../../core/repos/IInvoiceItemRepo";
 import { InvoiceItem } from "../../core/entities/InvoiceItem";
 import { InvoiceItemEntity } from "../db/entities/InvoiceItemEntity";
@@ -6,8 +6,8 @@ import { InvoiceItemEntity } from "../db/entities/InvoiceItemEntity";
 export class InvoiceItemRepo implements IInvoiceItemRepo {
   private repo: Repository<InvoiceItemEntity>;
 
-  constructor(private dataSource: DataSource) {
-    this.repo = dataSource.getRepository(InvoiceItemEntity);
+  constructor(manager: DataSource | EntityManager) {
+    this.repo = manager.getRepository(InvoiceItemEntity);
   }
 
   async bulkInsert(items: InvoiceItem[]): Promise<void> {

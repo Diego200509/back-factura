@@ -10,19 +10,27 @@ export class CreateInvoiceUseCase {
     date: Date;
     items: { productName: string; quantity: number; unitPrice: number }[];
   }): Promise<Invoice> {
-    // Construye objetos de dominio
     const items = input.items.map(
-      (i, idx) =>
+      (i) =>
         new InvoiceItem(
-          "",            
-          "",            
+          "",           // id
+          "",           // invoiceId
           i.productName,
           i.quantity,
           i.unitPrice
         )
     );
+
     const invoice = new Invoice("", input.customerName, input.date, items);
-    // Llama al repositorio
-    return this.invoiceRepo.create(invoice);
+
+    // ⏱️ Medir tiempo de escritura
+    const start = performance.now(); // también puedes usar Date.now() si estás en Node.js sin polyfills
+    const created = await this.invoiceRepo.create(invoice);
+    const end = performance.now();
+
+    // 💾 Guardar el tiempo de escritura en la entidad
+    created.writeTimeMs = Math.round(end - start); // opcionalmente redondeado
+
+    return created;
   }
 }

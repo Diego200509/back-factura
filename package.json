@@ -6,6 +6,10 @@
     "dev": "ts-node-dev --respawn --transpile-only src/presentation/server.ts",
     "seed": "ts-node-dev --respawn --transpile-only scripts/seed.ts",
     "benchmark": "ts-node scripts/benchmark.ts",
+    "insertMassiveOrders": "ts-node scripts/insertMassiveOrders.ts",
+    "seed_orders": "ts-node scripts/seed_orders.ts",
+    "clean": "ts-node scripts/clean.ts",
+     "bench": "ts-node scripts/benchmark_all.ts",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],

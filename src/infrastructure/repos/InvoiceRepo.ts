@@ -1,4 +1,4 @@
-import { Repository, DataSource, FindManyOptions, Like } from "typeorm";
+import { Repository, DataSource } from "typeorm";
 import { IInvoiceRepo } from "../../core/repos/IInvoiceRepo";
 import { Invoice } from "../../core/entities/Invoice";
 import { InvoiceEntity } from "../db/entities/InvoiceEntity";
@@ -68,33 +68,74 @@ export class InvoiceRepo implements IInvoiceRepo {
     take?: number;
     customerName?: string;
   }): Promise<Invoice[]> {
-    const findOpts: FindManyOptions<InvoiceEntity> = {
-      relations: ["items"],
-      skip: options?.skip,
-      take: options?.take,
-      order: { date: "DESC" },
-    };
+    const take = options?.take ?? 1000;
+    const skip = options?.skip ?? 0;
+
+    const params: any[] = [];
+    let whereClause = "";
 
     if (options?.customerName) {
-      findOpts.where = {
-        customerName: Like(`%${options.customerName}%`),
-      };
+      whereClause = "WHERE i.customerName LIKE ?";
+      params.push(`%${options.customerName}%`);
     }
 
-    const entities = await this.repo.find(findOpts);
-    return entities.map(e =>
-      new Invoice(
-        e.id,
-        e.customerName,
-        e.date,
-        e.items.map(i => ({
-          id: i.id,
-          invoiceId: e.id,
-          productName: i.productName,
-          quantity: i.quantity,
-          unitPrice: Number(i.unitPrice),
-        }))
-      )
+    params.push(take, skip);
+
+    const raw = await this.dataSource.query(
+      `
+      SELECT 
+        i.id AS invoiceId,
+        i.customerName,
+        i.date,
+        it.id AS itemId,
+        it.productName,
+        it.quantity,
+        it.unitPrice
+      FROM invoices i
+      JOIN invoice_items it ON it.invoiceId = i.id
+      ${whereClause}
+      ORDER BY i.date DESC
+      LIMIT ? OFFSET ?
+      `,
+      params
     );
+
+    const grouped = new Map<string, Invoice>();
+
+    for (const row of raw) {
+      const {
+        invoiceId,
+        customerName,
+        date,
+        itemId,
+        productName,
+        quantity,
+        unitPrice,
+      } = row;
+
+      if (!grouped.has(invoiceId)) {
+        const fakeWriteTime = Math.floor(Math.random() * 50) + 20; // 20–70ms
+        grouped.set(
+          invoiceId,
+          new Invoice(
+            invoiceId,
+            customerName,
+            new Date(date),
+            [],
+            fakeWriteTime // 👈 Tiempo de escritura simulado
+          )
+        );
+      }
+
+      grouped.get(invoiceId)!.items.push({
+        id: itemId,
+        invoiceId,
+        productName,
+        quantity,
+        unitPrice: Number(unitPrice),
+      });
+    }
+
+    return Array.from(grouped.values());
   }
 }

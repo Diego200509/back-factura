@@ -21,9 +21,12 @@ export class InvoiceItemEntity {
   @Column("decimal", { precision: 10, scale: 2 })
   unitPrice!: number;
 
+  @Column() // Esta línea define la FK explícitamente
+  invoiceId!: string;
+
   @ManyToOne(() => InvoiceEntity, invoice => invoice.items, {
     onDelete: "CASCADE"
   })
-  @JoinColumn({ name: "invoiceId" })
+  @JoinColumn({ name: "invoiceId" }) // Asegura que la relación use invoiceId
   invoice!: InvoiceEntity;
 }
