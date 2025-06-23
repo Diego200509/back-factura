@@ -64,6 +64,7 @@ export function invoiceRoutes(
     Querystring: {
       page?: string;
       pageSize?: string;
+      limit?: string;
       customerName?: string;
     };
   }>("/invoices", async (request, reply) => {
@@ -71,10 +72,11 @@ export function invoiceRoutes(
       page = "1",
       pageSize = "20",
       customerName,
+      limit,
     } = request.query;
 
     const pageNum = Math.max(1, parseInt(page, 10) || 1);
-    const sizeNum = Math.min(100, parseInt(pageSize, 10) || 20);
+    const sizeNum = limit ? parseInt(limit, 10) : parseInt(pageSize, 10) || 20;
 
     const invoices = await listInvoices.execute({
       page: pageNum,
